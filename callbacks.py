@@ -11,7 +11,7 @@ def get_callbacks():
     lr_monitor = LearningRateMonitor(logging_interval="step")
     early_stopping = EarlyStopping(
         monitor="val/bce",
-        patience=3,
+        patience=5,
         mode="min",
         check_on_train_epoch_end=True,
     )

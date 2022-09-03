@@ -1,6 +1,5 @@
 from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, List, Literal, Optional, Tuple, Union
+from typing import Any, Callable, Literal, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -28,6 +27,7 @@ class ChestXrayDataset(Dataset):
         patch_size: int = 64,
         transfom: Callable = None,
         random_erasing: Optional[bool] = False,
+        prob: float = 0.3,
         box_size: int = 32,
     ) -> None:
         super().__init__()
@@ -47,6 +47,7 @@ class ChestXrayDataset(Dataset):
         self.patch_size = patch_size
         self.resize_crop = RandomResizedCrop(size=(self.patch_size, self.patch_size))
         self.random_erasing = random_erasing
+        self.prob = prob
         self.box_size = box_size
         self.transform = transfom
 
@@ -65,7 +66,7 @@ class ChestXrayDataset(Dataset):
         label = torch.FloatTensor([label])
         resize_crop_img = self.resize_crop(image)
         # probability that it would want to use random erasing for this image
-        erase = np.random.choice([True, False], size=1, p=[0.45, 0.55])
+        erase = np.random.choice([True, False], size=1, p=[self.prob, 1 - self.prob])
         if self.random_erasing and self.box_size and erase:
             # to alter the image / add the erasing box on the image it is
             # necessary to rid of the channel dimension here

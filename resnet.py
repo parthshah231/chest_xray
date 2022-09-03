@@ -14,8 +14,13 @@ from torchio.transforms import RescaleIntensity
 from config import Config
 
 
-class LitResnet(LightningModule):
-    def __init__(self, out_features: int, config: Config, resnet_version: int = 18) -> None:
+class Resnet(LightningModule):
+    def __init__(
+        self,
+        out_features: int,
+        config: Config,
+        resnet_version: int = 18,
+    ) -> None:
         super().__init__()
         resnets = {
             18: models.resnet18,
@@ -30,6 +35,7 @@ class LitResnet(LightningModule):
         self.resnet_model = resnets[resnet_version](pretrained=True)
         linear_size = list(self.resnet_model.children())[-1].in_features
         self.resnet_model.fc = Linear(linear_size, out_features)
+        self.rescale = RescaleIntensity()
         self.config = config
 
     def save_configs(self, log_dir: Path):
@@ -61,8 +67,7 @@ class LitResnet(LightningModule):
         # for rescale_intersity it needs 3 dims (x, y, z)
         # if the img is 2D we can add z -> 1 acc. to documentation
         x = x.unsqueeze(3)
-        rescale = RescaleIntensity()
-        x_rescaled = rescale(x)
+        x_rescaled = self.rescale(x)
         x = x_rescaled.squeeze(3)
         # Since batch size is 1
         x = x.unsqueeze(0)
@@ -79,8 +84,7 @@ class LitResnet(LightningModule):
         # as numpy.repeat() and expands the channels
         # from 1 -> 3
         x = torch.repeat_interleave(input=x, repeats=3, dim=1)
-        rescale = RescaleIntensity()
-        x_rescaled = rescale(x)
+        x_rescaled = self.rescale(x)
         preds = self(x_rescaled)  # [16, 1]
         loss = self.bce(preds, target)
         self.log(f"{phase}/bce", loss, prog_bar=True)

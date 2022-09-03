@@ -4,26 +4,31 @@ import numpy as np
 import torch
 from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader
-from torchmetrics import Accuracy
 
 from callbacks import get_callbacks
 from config import Config
 from constants import NO_VAL
-from dataloader import ChestXrayDataset, ChestXrayTestDataset
-from resnet import LitResnet
+from dataloader import ChestXrayDataset
+from resnet import Resnet
+
+# from torchmetrics import Accuracy
+
 
 # Get them from command line!
 BATCH_SIZE = 32
 PATCH_SIZE = 256
-MAX_EPOCHS = 10
+MAX_EPOCHS = 20
 # 3e-4 for smaller batch-size
 # 1e-3 or 1e-4 for bigger batch-size
 LEARNING_RATE = 3e-4
-WEIGHT_DECAY = 2e-4
+WEIGHT_DECAY = 1e-4
 N_PATCHES = 11
 RESNET_VERSION = 18
 OUT_FEATURES = 1
 
+# random_erasing
+PROB = 0.45
+BOX_SIZE = 64
 
 # For AdamW
 # learning rate proportional to square root of batch_size (theoretically)
@@ -35,7 +40,14 @@ def run_resnet() -> None:
     args = parser.parse_args(["--gpus=0", "--max_epochs=20", "--val_check_interval=40"])
 
     # Record parameters for augmentations (random_erasing) as well
-    train_dataset = ChestXrayDataset(phase="train", crop=True, patch_size=PATCH_SIZE, random_erasing=True, box_size=64)
+    train_dataset = ChestXrayDataset(
+        phase="train",
+        crop=True,
+        patch_size=PATCH_SIZE,
+        random_erasing=True,
+        prob=PROB,
+        box_size=64,
+    )
     val_dataset = ChestXrayDataset(phase="val", crop=True, patch_size=PATCH_SIZE)
     # test_dataset = ChestXrayTestDataset(crop=True, patch_size=PATCH_SIZE, n_per_image=N_PATCHES)
 
@@ -52,9 +64,12 @@ def run_resnet() -> None:
         n_patches=N_PATCHES,
         len_train_dataset=len(train_dataloader),
         no_val=NO_VAL,
+        random_erasing=True,
+        prob=PROB,
+        box_size=64,
     )
     trainer = Trainer.from_argparse_args(args, callbacks=get_callbacks())
-    model = LitResnet(out_features=OUT_FEATURES, config=config, resnet_version=RESNET_VERSION)
+    model = Resnet(out_features=OUT_FEATURES, config=config, resnet_version=RESNET_VERSION)
     trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
     model.save_configs(log_dir=trainer.log_dir)
     i = 0
@@ -80,15 +95,19 @@ def run_resnet() -> None:
         pred = values[idx]
         preds.append(pred)
 
-    # if len(preds) == len(targets):
-    #     count = np.sum(preds == targets)
-    # else:
-    #     ValueError("Please check your shapes")
+    if len(preds) == len(targets):
+        # count = np.sum(preds == targets)
+        count = 0
+        for pred, target in zip(preds, targets):
+            if pred == target:
+                count += 1
+    else:
+        ValueError("Please check your shapes")
 
-    accuracy = Accuracy()
-    accuracy(preds, targets)
-    # accuracy = count / len(targets) * 100
-    # print(f"Accuracy is: {accuracy}")
+    # accuracy = Accuracy()
+    # accuracy(preds, targets)
+    accuracy = count / len(targets) * 100
+    print(f"Accuracy is: {accuracy}")
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader
 
 from dataloader import ChestXrayDataset, ChestXrayTestDataset
-from mlp import LitLinear
+from mlp import SimpleLinear
 
 BATCH_SIZE = 64
 PATCH_SIZE = 64
@@ -25,18 +25,14 @@ def run_MLP():
     test_dataloader = DataLoader(test_dataset, batch_size=1)
 
     trainer = Trainer.from_argparse_args(args)
-    model = LitLinear(in_features=PATCH_SIZE * PATCH_SIZE, out_features=1)
+    model = SimpleLinear(in_features=PATCH_SIZE * PATCH_SIZE, out_features=1)
     trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
     outputs = trainer.predict(model, test_dataloader)
     # patch_preds
     pred_patches, targets = zip(*outputs)
     pred_patches = np.concatenate(pred_patches.numpy(), axis=0).astype(np.float32)
     pred_patches = pred_patches.reshape(N_PATCHES, -1)
-    # [
-    #    [0, 0, 0, 1, 1],
-    #    [0, 0, 0, 1, 1],
-    #    [0, 0, 0, 1, 1],
-    # ]
+
     preds = []
     for pred_patch in pred_patches:
         values, count = np.unique(pred_patch, return_counts=True)

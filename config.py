@@ -18,6 +18,9 @@ class Config:
         n_patches: int,
         len_train_dataset: int,
         no_val: bool,
+        random_erasing: bool,
+        prob: float,
+        box_size: int,
     ) -> None:
         self.batch_size = batch_size
         self.patch_size = patch_size
@@ -28,6 +31,9 @@ class Config:
         self.len_train_dataset = len_train_dataset
         self.num_steps = len_train_dataset // batch_size
         self.no_val = no_val
+        self.random_erasing = random_erasing
+        self.probability = prob
+        self.box_size = box_size
 
     @staticmethod
     def parser() -> ArgumentParser:
@@ -40,6 +46,9 @@ class Config:
         p.add_argument("--weight_decay", help="", default=1e-5)
         p.add_argument("--n_patches", help="", default=50)
         p.add_argument("--no_val", help="", default=False)
+        p.add_argument("--random_erasing", help="", default=False)
+        p.add_argument("--box_size", help="", default=0.3)
+        p.add_argument("--box_size", help="", default=32)
         return p
 
     # @staticmethod
