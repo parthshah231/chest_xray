@@ -61,9 +61,14 @@ class ChestXrayDataset(Dataset):
         label = torch.FloatTensor([label])
         resize_crop = RandomResizedCrop(size=(self.patch_size, self.patch_size))
         resize_crop_img = resize_crop(image)
+        # probability that it would want to use random erasing for this image
         erase = np.random.choice([True, False], size=1, p=[0.45, 0.55])
         if self.random_erasing and self.box_size and erase:
+            # to alter the image / add the erasing box on the image it is
+            # necessary to rid of the channel dimension here
             resize_crop_img = resize_crop_img.squeeze(0).numpy()
+            # the reason to make the box black is purely because the probability
+            # of a black spot on the x-ray is much larger than any other color
             box = np.array([0] * self.box_size * self.box_size).reshape(self.box_size, self.box_size)
             x, y = np.random.randint(0, self.patch_size - self.box_size, size=2)
             resize_crop_img[x : x + self.box_size, y : y + self.box_size] = box
