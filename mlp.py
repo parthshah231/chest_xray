@@ -7,7 +7,7 @@ from torch.nn import BCELoss, Linear, Sigmoid
 from torch.optim import AdamW
 
 
-class LitLinear(LightningModule):
+class SimpleLinear(LightningModule):
     def __init__(self, in_features: int, out_features: int) -> None:
         super().__init__()
         self.linear = Linear(in_features=in_features, out_features=out_features)

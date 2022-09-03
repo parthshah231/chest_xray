@@ -1,5 +1,6 @@
+from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Literal, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -12,34 +13,42 @@ from torchvision.transforms import RandomResizedCrop
 from constants import NO_VAL, TEST_DIR, TRAIN_DIR, VAL_DIR
 
 
+class Phase(Enum):
+    Train = "train"
+    Val = "val"
+    Predict = "predict"
+    Test = "test"
+
+
 class ChestXrayDataset(Dataset):
     def __init__(
         self,
-        phase: str,
+        phase: Union[Literal["train"], Literal["val"]],
         crop: bool = False,
         patch_size: int = 64,
         transfom: Callable = None,
         random_erasing: Optional[bool] = False,
-        box_size: Optional[int] = 32,
+        box_size: int = 32,
     ) -> None:
         super().__init__()
         self.phase = phase
-        if self.phase == "train":
-            self.img_paths = list(TRAIN_DIR.rglob("*.jpeg"))
-        elif self.phase == "val":
-            self.img_paths = list(VAL_DIR.rglob("*.jpeg"))
+        if self.phase == Phase.Train.value:
+            self.img_paths = sorted(TRAIN_DIR.rglob("*.jpeg"))
+        elif self.phase == Phase.Val.value:
+            self.img_paths = sorted(VAL_DIR.rglob("*.jpeg"))
         else:
-            ValueError("Please pass train/val/test")
+            ValueError("Please pass train/val")
         # if the data is not too big, this loads all data in memory and helps processing
         # x10 faster (generally)
         # self.images = [io.imread(str(img_path)) for img_path in self.img_paths]
-        self.crop = crop
-        self.patch_size = patch_size
         self.label_map = {"NORMAL": 0, "PNEUMONIA": 1}
         self.labels = [self.label_map[img_path.parent.stem] for img_path in self.img_paths]
-        self.transform = transfom
+        self.crop = crop
+        self.patch_size = patch_size
+        self.resize_crop = RandomResizedCrop(size=(self.patch_size, self.patch_size))
         self.random_erasing = random_erasing
         self.box_size = box_size
+        self.transform = transfom
 
     def __getitem__(self, idx: int) -> Any:
         # could do all this in preprocess step and directly load the data from there
@@ -48,19 +57,13 @@ class ChestXrayDataset(Dataset):
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             image = image.squeeze()
         if self.crop:
-            x = 0
-            y = 0
             h, w = image.shape
-            h_6 = h // 6
-            w_6 = w // 6
-            cropped_image = image[y + h_6 :, x + w_6 : w - w_6]
+            cropped_image = image[h // 6 :, w // 6 : w - w // 6]
             image = cropped_image
-        image = torch.from_numpy(image).unsqueeze(0)
-        image = image.to(torch.float32)
+        image = torch.from_numpy(image).unsqueeze(0).float()
         label = self.labels[idx]
         label = torch.FloatTensor([label])
-        resize_crop = RandomResizedCrop(size=(self.patch_size, self.patch_size))
-        resize_crop_img = resize_crop(image)
+        resize_crop_img = self.resize_crop(image)
         # probability that it would want to use random erasing for this image
         erase = np.random.choice([True, False], size=1, p=[0.45, 0.55])
         if self.random_erasing and self.box_size and erase:
@@ -89,9 +92,9 @@ class ChestXrayTestDataset(Dataset):
     ) -> None:
         super().__init__()
         if NO_VAL:
-            self.img_paths = list(TEST_DIR.rglob("*.jpeg"))[:10]
+            self.img_paths = sorted(TEST_DIR.rglob("*.jpeg"))[:10]
         else:
-            self.img_paths = list(TEST_DIR.rglob("*.jpeg"))
+            self.img_paths = sorted(TEST_DIR.rglob("*.jpeg"))
         self.crop = crop
         self.patch_size = patch_size
         self.label_map = {"NORMAL": 0, "PNEUMONIA": 1}

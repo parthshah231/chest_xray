@@ -4,7 +4,8 @@ from pytorch_lightning import LightningModule
 from torch import Tensor
 
 
-class LitConv(LightningModule):
+# TODO
+class Conv(LightningModule):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 

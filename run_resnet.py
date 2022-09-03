@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader
+from torchmetrics import Accuracy
 
 from callbacks import get_callbacks
 from config import Config
@@ -18,8 +19,8 @@ MAX_EPOCHS = 10
 # 3e-4 for smaller batch-size
 # 1e-3 or 1e-4 for bigger batch-size
 LEARNING_RATE = 3e-4
-WEIGHT_DECAY = 1e-4
-N_PATCHES = 10
+WEIGHT_DECAY = 2e-4
+N_PATCHES = 11
 RESNET_VERSION = 18
 OUT_FEATURES = 1
 
@@ -36,11 +37,11 @@ def run_resnet() -> None:
     # Record parameters for augmentations (random_erasing) as well
     train_dataset = ChestXrayDataset(phase="train", crop=True, patch_size=PATCH_SIZE, random_erasing=True, box_size=64)
     val_dataset = ChestXrayDataset(phase="val", crop=True, patch_size=PATCH_SIZE)
-    test_dataset = ChestXrayTestDataset(crop=True, patch_size=PATCH_SIZE, n_per_image=N_PATCHES)
+    # test_dataset = ChestXrayTestDataset(crop=True, patch_size=PATCH_SIZE, n_per_image=N_PATCHES)
 
     train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
-    test_dataloader = DataLoader(test_dataset, batch_size=1)
+    predict_dataloader = DataLoader(val_dataset, batch_size=1)
 
     config = Config(
         batch_size=BATCH_SIZE,
@@ -61,7 +62,7 @@ def run_resnet() -> None:
     while i < N_PATCHES:
         output = trainer.predict(
             model,
-            test_dataloader,
+            predict_dataloader,
             ckpt_path="best" if not NO_VAL else None,
         )
         outputs.append(output)
@@ -79,16 +80,15 @@ def run_resnet() -> None:
         pred = values[idx]
         preds.append(pred)
 
-    if len(preds) == len(targets):
-        count = 0
-        for pred, target in zip(preds, targets):
-            if pred == target:
-                count += 1
-    else:
-        ValueError("Please check your shapes")
+    # if len(preds) == len(targets):
+    #     count = np.sum(preds == targets)
+    # else:
+    #     ValueError("Please check your shapes")
 
-    accuracy = count / len(targets) * 100
-    print(f"Accuracy is: {accuracy}")
+    accuracy = Accuracy()
+    accuracy(preds, targets)
+    # accuracy = count / len(targets) * 100
+    # print(f"Accuracy is: {accuracy}")
 
 
 if __name__ == "__main__":

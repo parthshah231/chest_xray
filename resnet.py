@@ -35,8 +35,8 @@ class LitResnet(LightningModule):
     def save_configs(self, log_dir: Path):
         log_dir = Path(log_dir) / "config.json"
         self.config.__dict__["resnet_version"] = self.resnet_version
-        json.dump(self.config.__dict__, open(log_dir, "w"))
-        # DataFrame(self.config).to_json(log_dir_version)
+        with open(log_dir, "w") as handle:
+            json.dump(self.config.__dict__, handle)
 
     def forward(self, x, *args, **kwargs) -> Any:
         x = self.resnet_model(x)
@@ -48,6 +48,7 @@ class LitResnet(LightningModule):
     def validation_step(self, batch: Tuple[Tensor, Tensor], *args, **kwargs) -> Optional[Tensor]:
         return self._shared_step(batch, "val")
 
+    # TODO
     def validation_epoch_end(self, outputs: Any) -> None:
         return super().validation_epoch_end(outputs)
 
