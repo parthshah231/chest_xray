@@ -48,6 +48,9 @@ class LitResnet(LightningModule):
     def validation_step(self, batch: Tuple[Tensor, Tensor], *args, **kwargs) -> Optional[Tensor]:
         return self._shared_step(batch, "val")
 
+    def validation_epoch_end(self, outputs: Any) -> None:
+        return super().validation_epoch_end(outputs)
+
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: Optional[int] = None) -> Any:
         # x -> List[Tensor] | x[0].shape -> [1, 1, 64, 64]
         # target -> [1, 1]

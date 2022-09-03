@@ -13,14 +13,14 @@ from resnet import LitResnet
 
 # Get them from command line!
 BATCH_SIZE = 32
-PATCH_SIZE = 128
+PATCH_SIZE = 256
 MAX_EPOCHS = 10
 # 3e-4 for smaller batch-size
 # 1e-3 or 1e-4 for bigger batch-size
 LEARNING_RATE = 3e-4
-WEIGHT_DECAY = 1e-5
-N_PATCHES = 50
-RESNET_VERSION = 50
+WEIGHT_DECAY = 1e-4
+N_PATCHES = 10
+RESNET_VERSION = 18
 OUT_FEATURES = 1
 
 
@@ -28,12 +28,13 @@ OUT_FEATURES = 1
 # learning rate proportional to square root of batch_size (theoretically)
 
 
-def run_resnet():
+def run_resnet() -> None:
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
     args = parser.parse_args(["--gpus=0", "--max_epochs=20", "--val_check_interval=40"])
 
-    train_dataset = ChestXrayDataset(phase="train", crop=True, patch_size=PATCH_SIZE)
+    # Record parameters for augmentations (random_erasing) as well
+    train_dataset = ChestXrayDataset(phase="train", crop=True, patch_size=PATCH_SIZE, random_erasing=True, box_size=64)
     val_dataset = ChestXrayDataset(phase="val", crop=True, patch_size=PATCH_SIZE)
     test_dataset = ChestXrayTestDataset(crop=True, patch_size=PATCH_SIZE, n_per_image=N_PATCHES)
 
