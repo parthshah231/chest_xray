@@ -22,13 +22,16 @@ MAX_EPOCHS = 20
 # 1e-3 or 1e-4 for bigger batch-size
 LEARNING_RATE = 3e-4
 WEIGHT_DECAY = 1e-4
-N_PATCHES = 11
+N_PATCHES = 3
 RESNET_VERSION = 18
 OUT_FEATURES = 1
 
 # random_erasing
 PROB = 0.45
 BOX_SIZE = 64
+
+# NO_VAL = True (quick-test)
+# SUBJECT_WISE = True (rescale intenstiy w.r.t. subject)
 
 # For AdamW
 # learning rate proportional to square root of batch_size (theoretically)
@@ -46,7 +49,7 @@ def run_resnet() -> None:
         patch_size=PATCH_SIZE,
         random_erasing=True,
         prob=PROB,
-        box_size=64,
+        box_size=BOX_SIZE,
     )
     val_dataset = ChestXrayDataset(phase="val", crop=True, patch_size=PATCH_SIZE)
     # test_dataset = ChestXrayTestDataset(crop=True, patch_size=PATCH_SIZE, n_per_image=N_PATCHES)
@@ -66,7 +69,7 @@ def run_resnet() -> None:
         no_val=NO_VAL,
         random_erasing=True,
         prob=PROB,
-        box_size=64,
+        box_size=BOX_SIZE,
     )
     trainer = Trainer.from_argparse_args(args, callbacks=get_callbacks())
     model = Resnet(out_features=OUT_FEATURES, config=config, resnet_version=RESNET_VERSION)

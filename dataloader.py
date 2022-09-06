@@ -7,9 +7,10 @@ import torch
 from skimage import io
 from torch import Tensor
 from torch.utils.data import Dataset
+from torchio.transforms import RescaleIntensity
 from torchvision.transforms import RandomResizedCrop
 
-from constants import NO_VAL, TEST_DIR, TRAIN_DIR, VAL_DIR
+from constants import NO_VAL, SUBJECT_WISE, TEST_DIR, TRAIN_DIR, VAL_DIR
 
 
 class Phase(Enum):
@@ -45,6 +46,7 @@ class ChestXrayDataset(Dataset):
         self.labels = [self.label_map[img_path.parent.stem] for img_path in self.img_paths]
         self.crop = crop
         self.patch_size = patch_size
+        self.rescale = RescaleIntensity()
         self.resize_crop = RandomResizedCrop(size=(self.patch_size, self.patch_size))
         self.random_erasing = random_erasing
         self.prob = prob
@@ -61,11 +63,18 @@ class ChestXrayDataset(Dataset):
             h, w = image.shape
             cropped_image = image[h // 6 :, w // 6 : w - w // 6]
             image = cropped_image
-        image = torch.from_numpy(image).unsqueeze(0).float()
         label = self.labels[idx]
         label = torch.FloatTensor([label])
-        resize_crop_img = self.resize_crop(image)
+        image = torch.from_numpy(image).unsqueeze(0).float()
+        if SUBJECT_WISE:
+            image = image.unsqueeze(3)
+            image_rescaled = self.rescale(image)
+            image_rescaled = image_rescaled.squeeze(3)
+            resize_crop_img = self.resize_crop(image_rescaled)
+        else:
+            resize_crop_img = self.resize_crop(image)
         # probability that it would want to use random erasing for this image
+        # np.random.bernoulli/binomial
         erase = np.random.choice([True, False], size=1, p=[self.prob, 1 - self.prob])
         if self.random_erasing and self.box_size and erase:
             # to alter the image / add the erasing box on the image it is
@@ -98,6 +107,8 @@ class ChestXrayTestDataset(Dataset):
             self.img_paths = sorted(TEST_DIR.rglob("*.jpeg"))
         self.crop = crop
         self.patch_size = patch_size
+        self.rescale = RescaleIntensity()
+        self.resize_crop = RandomResizedCrop(size=(self.patch_size, self.patch_size))
         self.label_map = {"NORMAL": 0, "PNEUMONIA": 1}
         self.labels = [self.label_map[img_path.parent.stem] for img_path in self.img_paths]
         self.n_per_image = n_per_image
@@ -119,12 +130,16 @@ class ChestXrayTestDataset(Dataset):
             w_6 = w // 6
             cropped_image = image[y + h_6 :, x + w_6 : w - w_6]
             image = cropped_image
-        image = torch.from_numpy(image).unsqueeze(0)
-        image = image.to(torch.float32)
         label = self.labels[idx]
         label = torch.FloatTensor([label])
-        resize_crop = RandomResizedCrop(size=(self.patch_size, self.patch_size))
-        resize_crop_img = resize_crop(image)
+        image = torch.from_numpy(image).unsqueeze(0).float()
+        if SUBJECT_WISE:
+            image = image.unsqueeze(3)
+            image_rescaled = self.rescale(image)
+            image_rescaled = image_rescaled.squeeze(3)
+            resize_crop_img = self.resize_crop(image_rescaled)
+        else:
+            resize_crop_img = self.resize_crop(image)
         return resize_crop_img, label
 
     def __len__(self) -> int:

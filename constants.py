@@ -8,3 +8,4 @@ TEST_DIR = DATA / "test"
 
 # NO_VAL = True
 NO_VAL = False
+SUBJECT_WISE = False
