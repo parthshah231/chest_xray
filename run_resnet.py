@@ -1,8 +1,10 @@
 from argparse import ArgumentParser
 
 import numpy as np
+import sklearn
 import torch
 from pytorch_lightning import Trainer
+from sklearn.metrics import accuracy_score, precision_score, recall_score
 from torch.utils.data import DataLoader
 
 from callbacks import get_callbacks
@@ -22,7 +24,7 @@ MAX_EPOCHS = 20
 # 1e-3 or 1e-4 for bigger batch-size
 LEARNING_RATE = 3e-4
 WEIGHT_DECAY = 1e-4
-N_PATCHES = 3
+N_PATCHES = 11
 RESNET_VERSION = 18
 OUT_FEATURES = 1
 
@@ -97,6 +99,18 @@ def run_resnet() -> None:
         idx = np.argmax(count)
         pred = values[idx]
         preds.append(pred)
+
+    # preds = np.asarray(preds).reshape(-1, 1)
+    # recall = recall_score(y_true=targets, y_pred=preds, average="binary")
+    # precision = precision_score(y_true=targets, y_pred=preds, average="binary")
+    # f1_score = sklearn.metrics.f1_score(y_true=targets, y_pred=preds)
+    # accuracy = accuracy_score(y_true=targets, y_pred=preds)
+
+    # print("---------------- Results ----------------")
+    # print(f"Recall: {recall}")
+    # print(f"Precision: {precision}")
+    # print(f"F1 Score: {f1_score}")
+    # print(f"Accuracy: {accuracy}")
 
     if len(preds) == len(targets):
         # count = np.sum(preds == targets)
