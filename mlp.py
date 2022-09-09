@@ -3,21 +3,22 @@ from typing import Any, Optional, Tuple
 import torch
 from pytorch_lightning import LightningModule
 from torch import Tensor
-from torch.nn import BCELoss, Linear, Sigmoid
+from torch.nn import BCEWithLogitsLoss, Linear, Sigmoid
 from torch.optim import AdamW
+
+from config import Config
 
 
 class SimpleLinear(LightningModule):
-    def __init__(self, in_features: int, out_features: int) -> None:
+    def __init__(self, in_features: int, out_features: int, config: Config) -> None:
         super().__init__()
         self.linear = Linear(in_features=in_features, out_features=out_features)
-        self.sigmoid = Sigmoid()
-        self.bce = BCELoss()
+        self.bce = BCEWithLogitsLoss()
+        self.config = config
 
     def forward(self, x):
         x = self.linear(x)
-        out = self.sigmoid(x)
-        return out
+        return x
 
     def training_step(self, batch: Tuple[Tensor, Tensor], *args, **kwargs) -> Tensor:
         return self._shared_step(batch, "train")
@@ -39,11 +40,14 @@ class SimpleLinear(LightningModule):
         # target -> [16, 1]
         x, target = batch
         x = x.view(x.shape[0], -1)  # [16, 4096]
-        preds = self(x)  # [16, 1]
-        loss = self.bce(preds, target)
+        loss = self(x)
         self.log(f"{phase}/bce", loss, prog_bar=True)
         return loss
 
     def configure_optimizers(self):
-        opt = AdamW(self.parameters())
+        opt = AdamW(
+            self.parameters(),
+            lr=self.config.learning_rate,
+            weight_decay=self.config.weight_decay,
+        )
         return [opt]

@@ -12,6 +12,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from torchio.transforms import RescaleIntensity
 
 from config import Config
+from constants import SUBJECT_WISE
 
 
 class Resnet(LightningModule):
@@ -51,7 +52,7 @@ class Resnet(LightningModule):
     def training_step(self, batch: Tuple[Tensor, Tensor], *args, **kwargs) -> Tensor:
         return self._shared_step(batch, "train")
 
-    def validation_step(self, batch: Tuple[Tensor, Tensor], *args, **kwargs) -> Optional[Tensor]:
+    def validation_step(self, batch: Tuple[Tensor, Tensor], *args, **kwargs) -> Tensor:
         return self._shared_step(batch, "val")
 
     # TODO
@@ -66,9 +67,10 @@ class Resnet(LightningModule):
         x = torch.repeat_interleave(input=x, repeats=3, dim=0)
         # for rescale_intersity it needs 3 dims (x, y, z)
         # if the img is 2D we can add z -> 1 acc. to documentation
-        x = x.unsqueeze(3)
-        x_rescaled = self.rescale(x)
-        x = x_rescaled.squeeze(3)
+        if not SUBJECT_WISE:
+            x = x.unsqueeze(3)
+            x_rescaled = self.rescale(x)
+            x = x_rescaled.squeeze(3)
         # Since batch size is 1
         x = x.unsqueeze(0)
         preds = self(x)  # [n, 1]
@@ -84,8 +86,11 @@ class Resnet(LightningModule):
         # as numpy.repeat() and expands the channels
         # from 1 -> 3
         x = torch.repeat_interleave(input=x, repeats=3, dim=1)
-        x_rescaled = self.rescale(x)
-        preds = self(x_rescaled)  # [16, 1]
+        if not SUBJECT_WISE:
+            x_rescaled = self.rescale(x)
+            preds = self(x_rescaled)  # [16, 1]
+        else:
+            preds = self(x)  # [16, 1]
         loss = self.bce(preds, target)
         self.log(f"{phase}/bce", loss, prog_bar=True)
         return loss
