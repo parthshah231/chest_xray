@@ -100,32 +100,17 @@ def run_resnet() -> None:
         pred = values[idx]
         preds.append(pred)
 
-    # preds = np.asarray(preds).reshape(-1, 1)
-    # recall = recall_score(y_true=targets, y_pred=preds, average="binary")
-    # precision = precision_score(y_true=targets, y_pred=preds, average="binary")
-    # f1_score = sklearn.metrics.f1_score(y_true=targets, y_pred=preds)
-    # accuracy = accuracy_score(y_true=targets, y_pred=preds)
+    preds = np.asarray(preds).reshape(-1, 1)
+    recall = recall_score(y_true=targets, y_pred=preds, average="binary")
+    precision = precision_score(y_true=targets, y_pred=preds, average="binary")
+    f1_score = sklearn.metrics.f1_score(y_true=targets, y_pred=preds)
+    accuracy = accuracy_score(y_true=targets, y_pred=preds)
 
-    # print("---------------- Results ----------------")
-    # print(f"Recall: {recall}")
-    # print(f"Precision: {precision}")
-    # print(f"F1 Score: {f1_score}")
-    # print(f"Accuracy: {accuracy}")
-
-    if len(preds) == len(targets):
-        # count = np.sum(preds == targets)
-        count = 0
-        for pred, target in zip(preds, targets):
-            if pred == target:
-                count += 1
-    else:
-        ValueError("Please check your shapes")
-
-    # accuracy = Accuracy()
-    # accuracy(preds, targets)
-    accuracy = count / len(targets) * 100
-    print(f"Accuracy is: {accuracy}")
-
+    print("---------------- Results ----------------")
+    print(f"Recall: {recall}")
+    print(f"Precision: {precision}")
+    print(f"F1 Score: {f1_score}")
+    print(f"Accuracy: {accuracy}")
 
 if __name__ == "__main__":
     run_resnet()
