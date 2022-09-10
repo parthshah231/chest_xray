@@ -1,13 +1,13 @@
+from typing import Dict
+
 from pytorch_lightning.callbacks import (
     EarlyStopping,
     LearningRateMonitor,
     ModelCheckpoint,
 )
 
-from constants import NO_VAL
 
-
-def get_callbacks():
+def get_callbacks(config: Dict):
     lr_monitor = LearningRateMonitor(logging_interval="step")
     early_stopping = EarlyStopping(
         monitor="val/bce",
@@ -32,7 +32,7 @@ def get_callbacks():
         model_checkpoint,
     ]
 
-    if NO_VAL:
+    if config["no_val"]:
         callbacks_.remove(early_stopping)
         callbacks_.remove(model_checkpoint)
 

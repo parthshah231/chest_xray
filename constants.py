@@ -9,7 +9,3 @@ TEST_DIR = DATA / "test"
 # TODO
 # Never have mutable constants, Oh how I miss C++! lol
 # Will get them from CLI by next week
-# NO_VAL = True
-NO_VAL = False
-SUBJECT_WISE = True
-# SUBJECT_WISE = False
