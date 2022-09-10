@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import torch
 import torchvision.models as models
@@ -11,15 +11,12 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torchio.transforms import RescaleIntensity
 
-from config import Config
-from constants import SUBJECT_WISE
-
 
 class Resnet(LightningModule):
     def __init__(
         self,
         out_features: int,
-        config: Config,
+        config: Dict,
         resnet_version: int = 18,
     ) -> None:
         super().__init__()
@@ -41,9 +38,9 @@ class Resnet(LightningModule):
 
     def save_configs(self, log_dir: Path):
         log_dir = Path(log_dir) / "config.json"
-        self.config.__dict__["resnet_version"] = self.resnet_version
+        self.config["resnet_version"] = self.resnet_version
         with open(log_dir, "w") as handle:
-            json.dump(self.config.__dict__, handle)
+            json.dump(self.config, handle)
 
     def forward(self, x, *args, **kwargs) -> Any:
         x = self.resnet_model(x)
@@ -67,7 +64,7 @@ class Resnet(LightningModule):
         x = torch.repeat_interleave(input=x, repeats=3, dim=0)
         # for rescale_intersity it needs 3 dims (x, y, z)
         # if the img is 2D we can add z -> 1 acc. to documentation
-        if not SUBJECT_WISE:
+        if not self.config["subject_wise"]:
             x = x.unsqueeze(3)
             x_rescaled = self.rescale(x)
             x = x_rescaled.squeeze(3)
@@ -86,7 +83,7 @@ class Resnet(LightningModule):
         # as numpy.repeat() and expands the channels
         # from 1 -> 3
         x = torch.repeat_interleave(input=x, repeats=3, dim=1)
-        if not SUBJECT_WISE:
+        if not self.config["subject_wise"]:
             x_rescaled = self.rescale(x)
             preds = self(x_rescaled)  # [16, 1]
         else:
@@ -96,8 +93,11 @@ class Resnet(LightningModule):
         return loss
 
     def configure_optimizers(self):
-        opt = AdamW(self.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)
-        sched = CosineAnnealingLR(optimizer=opt, T_max=self.config.max_epochs * self.config.num_steps)
+        opt = AdamW(self.parameters(), lr=self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        sched = CosineAnnealingLR(
+            optimizer=opt,
+            T_max=self.config["max_epochs"] * (self.config["len_train_dataset"] // self.config["batch_size"]),
+        )
         return dict(
             optimizer=opt,
             lr_scheduler=dict(

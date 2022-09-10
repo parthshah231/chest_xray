@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import torch
 from pytorch_lightning import LightningModule
@@ -6,11 +6,9 @@ from torch import Tensor
 from torch.nn import BCEWithLogitsLoss, Linear, Sigmoid
 from torch.optim import AdamW
 
-from config import Config
-
 
 class SimpleLinear(LightningModule):
-    def __init__(self, in_features: int, out_features: int, config: Config) -> None:
+    def __init__(self, in_features: int, out_features: int, config: Dict) -> None:
         super().__init__()
         self.linear = Linear(in_features=in_features, out_features=out_features)
         self.bce = BCEWithLogitsLoss()
@@ -47,7 +45,7 @@ class SimpleLinear(LightningModule):
     def configure_optimizers(self):
         opt = AdamW(
             self.parameters(),
-            lr=self.config.learning_rate,
-            weight_decay=self.config.weight_decay,
+            lr=self.config["learning_rate"],
+            weight_decay=self.config["weight_decay"],
         )
         return [opt]

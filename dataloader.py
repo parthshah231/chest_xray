@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Callable, Literal, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Literal, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 from torchio.transforms import RescaleIntensity
 from torchvision.transforms import RandomResizedCrop
 
-from constants import NO_VAL, SUBJECT_WISE, TEST_DIR, TRAIN_DIR, VAL_DIR
+from constants import TEST_DIR, TRAIN_DIR, VAL_DIR
 
 
 class Phase(Enum):
@@ -23,6 +23,7 @@ class Phase(Enum):
 class ChestXrayDataset(Dataset):
     def __init__(
         self,
+        config: Dict,
         phase: Union[Literal["train"], Literal["val"]],
         crop: bool = False,
         patch_size: int = 64,
@@ -32,11 +33,15 @@ class ChestXrayDataset(Dataset):
         box_size: int = 32,
     ) -> None:
         super().__init__()
+        self.config = config
         self.phase = phase
         if self.phase == Phase.Train.value:
             self.img_paths = sorted(TRAIN_DIR.rglob("*.jpeg"))
         elif self.phase == Phase.Val.value:
-            self.img_paths = sorted(VAL_DIR.rglob("*.jpeg"))
+            if self.config["no_val"]:
+                self.img_paths = sorted(VAL_DIR.rglob("*.jpeg"))[:10]
+            else:
+                self.img_paths = sorted(VAL_DIR.rglob("*.jpeg"))
         else:
             ValueError("Please pass train/val")
         # if the data is not too big, this loads all data in memory and helps processing
@@ -66,7 +71,7 @@ class ChestXrayDataset(Dataset):
         label = self.labels[idx]
         label = torch.FloatTensor([label])
         image = torch.from_numpy(image).unsqueeze(0).float()
-        if SUBJECT_WISE:
+        if self.config["subject_wise"]:
             image = image.unsqueeze(3)
             image_rescaled = self.rescale(image)
             image_rescaled = image_rescaled.squeeze(3)
@@ -95,13 +100,15 @@ class ChestXrayDataset(Dataset):
 class ChestXrayTestDataset(Dataset):
     def __init__(
         self,
+        config: Dict,
         crop: bool = False,
         n_per_image: int = 1,
         patch_size: int = 64,
         transfom: Callable = None,
     ) -> None:
         super().__init__()
-        if NO_VAL:
+        self.config = config
+        if self.config["no_val"]:
             self.img_paths = sorted(TEST_DIR.rglob("*.jpeg"))[:10]
         else:
             self.img_paths = sorted(TEST_DIR.rglob("*.jpeg"))
@@ -133,7 +140,7 @@ class ChestXrayTestDataset(Dataset):
         label = self.labels[idx]
         label = torch.FloatTensor([label])
         image = torch.from_numpy(image).unsqueeze(0).float()
-        if SUBJECT_WISE:
+        if self.config["subject_wise"]:
             image = image.unsqueeze(3)
             image_rescaled = self.rescale(image)
             image_rescaled = image_rescaled.squeeze(3)
