@@ -14,7 +14,7 @@ class SimpleLinear(LightningModule):
         self.bce = BCEWithLogitsLoss()
         self.config = config
 
-    def forward(self, x):
+    def forward(self, x) -> Tensor:
         x = self.linear(x)
         return x
 
@@ -24,25 +24,27 @@ class SimpleLinear(LightningModule):
     def validation_step(self, batch: Tuple[Tensor, Tensor], *args, **kwargs) -> Tensor:
         return self._shared_step(batch, "val")
 
-    def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: Optional[int] = None) -> Any:
-        # x -> List[Tensor] | x[0].shape -> [1, 1, 64, 64]
-        # target -> [1, 1]
+    def predict_step(
+        self, batch: Tuple[Tensor, Tensor], batch_idx: int, dataloader_idx: Optional[int] = None
+    ) -> Tuple[Tensor, Tensor]:
+        # x -> [b, c, h, w]
+        # target -> [b, 1]
         x, target = batch
-        x = torch.stack(x)  # x -> [n, 1, 1, 64, 64] n -> number of patches
-        x = x.view(x.shape[0], -1)  # [n, 4096]
-        preds = self(x)  # [n, 1]
+        x = torch.stack(x)
+        x = x.view(x.shape[0], -1)
+        preds = self(x)
         return preds, target
 
-    def _shared_step(self, batch: Tuple[Tensor, Tensor], phase: str) -> Any:
-        # x      -> [16, 1, 64, 64]
-        # target -> [16, 1]
+    def _shared_step(self, batch: Tuple[Tensor, Tensor], phase: str) -> Tensor:
+        # x      -> [b, c, h, w]
+        # target -> [b, 1]
         x, target = batch
-        x = x.view(x.shape[0], -1)  # [16, 4096]
+        x = x.view(x.shape[0], -1)
         loss = self(x)
         self.log(f"{phase}/bce", loss, prog_bar=True)
         return loss
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> Dict:
         opt = AdamW(
             self.parameters(),
             lr=self.config["learning_rate"],

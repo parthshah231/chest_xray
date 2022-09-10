@@ -58,7 +58,7 @@ class ChestXrayDataset(Dataset):
         self.box_size = box_size
         self.transform = transfom
 
-    def __getitem__(self, idx: int) -> Any:
+    def __getitem__(self, idx: int) -> Tuple[Tensor, Tensor]:
         # could do all this in preprocess step and directly load the data from there
         image = io.imread(self.img_paths[idx])
         if len(image.shape) == 3 and image.shape[2] == 3:
