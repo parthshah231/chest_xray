@@ -5,7 +5,3 @@ DATA = ROOT / "data"
 TRAIN_DIR = DATA / "train"
 VAL_DIR = DATA / "val"
 TEST_DIR = DATA / "test"
-
-# TODO
-# Never have mutable constants, Oh how I miss C++! lol
-# Will get them from CLI by next week

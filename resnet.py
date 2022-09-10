@@ -36,13 +36,13 @@ class Resnet(LightningModule):
         self.rescale = RescaleIntensity()
         self.config = config
 
-    def save_configs(self, log_dir: Path):
+    def save_configs(self, log_dir: Path) -> None:
         log_dir = Path(log_dir) / "config.json"
         self.config["resnet_version"] = self.resnet_version
         with open(log_dir, "w") as handle:
             json.dump(self.config, handle)
 
-    def forward(self, x, *args, **kwargs) -> Any:
+    def forward(self, x, *args, **kwargs) -> Tensor:
         x = self.resnet_model(x)
         return x
 
@@ -56,9 +56,11 @@ class Resnet(LightningModule):
     def validation_epoch_end(self, outputs: Any) -> None:
         return super().validation_epoch_end(outputs)
 
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: Optional[int] = None) -> Any:
-        # x -> List[Tensor] | x[0].shape -> [1, 1, 64, 64]
-        # target -> [1, 1]
+    def predict_step(
+        self, batch: Tuple[Tensor, Tensor], batch_idx: int, dataloader_idx: Optional[int] = None
+    ) -> Tuple[Tensor, Tensor]:
+        # x -> [b,c,h,w]
+        # target -> [b, 1]
         x, target = batch
         x = x.squeeze(1)
         x = torch.repeat_interleave(input=x, repeats=3, dim=0)
@@ -74,9 +76,9 @@ class Resnet(LightningModule):
         preds = torch.sigmoid(preds) > 0.5
         return torch.tensor(preds), torch.tensor(target)
 
-    def _shared_step(self, batch: Tuple[Tensor, Tensor], phase: str) -> Any:
-        # x      -> [16, 1, 64, 64]
-        # target -> [16, 1]
+    def _shared_step(self, batch: Tuple[Tensor, Tensor], phase: str) -> Tensor:
+        # x      -> [b, c, h, w]
+        # target -> [b, 1]
         x, target = batch
         # since the dataset contains grayscale images
         # here the channel is 1 repeat_interleave() works
@@ -85,14 +87,14 @@ class Resnet(LightningModule):
         x = torch.repeat_interleave(input=x, repeats=3, dim=1)
         if not self.config["subject_wise"]:
             x_rescaled = self.rescale(x)
-            preds = self(x_rescaled)  # [16, 1]
+            preds = self(x_rescaled)
         else:
-            preds = self(x)  # [16, 1]
+            preds = self(x)
         loss = self.bce(preds, target)
         self.log(f"{phase}/bce", loss, prog_bar=True)
         return loss
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> Dict:
         opt = AdamW(self.parameters(), lr=self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         sched = CosineAnnealingLR(
             optimizer=opt,
