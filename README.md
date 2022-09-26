@@ -4,7 +4,7 @@ To classify a normal chest xray to the one with bacterial pneumonia.
 > Recorded an accuracy of 98.32%
 
 
-## Challenges
+## Approach
 
 -   Images were not of the same size so implemented [patch based](https://arxiv.org/abs/2201.09792) training. Every epoch the dataloader would sample a random patch (256 x 256) from the x-ray image and train the network based on that.
 -   Divided an image into 6 equal parts and cropped the first part from either sides, as that region is mostly going to be pitch black and not going to contribute anything to the training model.
