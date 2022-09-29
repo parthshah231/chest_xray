@@ -9,7 +9,7 @@ To classify a normal chest xray to the one with bacterial pneumonia.
 - For the analysis of chest x-ray images, all chest radiographs were initially screened for quality control by removing all low quality or unreadable scans. The diagnoses for the images were then graded by two expert physicians before being cleared for training the AI system. In order to account for any grading errors, the evaluation set was also checked by a third expert.
 - Link to the dataset: https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia
 
-![Types of Chest xrays in dataset](README\for_git.JPG)
+![Types of Chest xrays in dataset](https://github.com/parthshah231/chest_xray/blob/master/README/for_git.JPG)
 
 - After searching and sorting through notebooks for the following dataset, the best notebook I found recorded the results **Recall: 98%, Precision: 79%**
 - My current best model records **Recall: 98.72%, Precision: 97.48%**
