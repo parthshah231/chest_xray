@@ -12,7 +12,7 @@ To classify a normal chest xray to the one with bacterial pneumonia.
 ![Types of Chest xrays in dataset](https://github.com/parthshah231/chest_xray/blob/master/README/for_git.JPG)
 
 - After searching and sorting through notebooks for the following dataset, the best notebook I found recorded the results **Recall: 98%, Precision: 79%**
-- My current best model records **Recall: 98.72%, Precision: 97.48%**
+- My current best model - Reset 34 with subjectwise IntensityRescale records **Recall: 98.72%, Precision: 97.48%**
 
 ## Approach
 
