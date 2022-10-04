@@ -24,6 +24,7 @@ To classify a normal chest xray to the one with bacterial pneumonia.
 
 ## Results
 
+After conducting an ablation study, the results are recorded below, please note the batch_size for all the models below is 32.
 
 ### Model : Resnet - 18
 
@@ -39,9 +40,22 @@ To classify a normal chest xray to the one with bacterial pneumonia.
 | subject-wise | 0.9872 |    0.9748 |   0.9810 |   0.9725 |
 |  patch-wise  | 0.9788 |    0.9585 |   0.9685 |   0.9542 |
 
+### Model : SimpleConv
+|  Re-scaling  | Recall | Precision | F1 Score | Accuracy |
+| :----------: | :----: | --------: | -------: | -------: |
+| subject-wise | 0.7711 |    0.9891 |   0.8666 |   0.8292 |
+|  patch-wise  | 0.9872 |    0.9505 |   0.9588 |   0.9541 |
+
+
 ### Model : SimpleLinear
 
 |  Re-scaling  | Recall | Precision | F1 Score | Accuracy |
 | :----------: | :----: | --------: | -------: | -------: |
 | subject-wise | 0.9788 |    0.7598 |   0.8555 |   0.7621 |
 |  patch-wise  | 1.0    |    0.7375 |   0.8473 |   0.7408 |
+
+
+## Futher Implementation
+- Implementing and testing the results of TrivialAugment
+- Optimizing Convolution model to make it more dynamic
+- Implementing other [transfer learning](https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html) models such as EfficientNet, MobileNetV2
