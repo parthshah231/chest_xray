@@ -1,3 +1,11 @@
+# fmt: off
+import sys  # isort:skip
+from pathlib import Path  # isort:skip
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.append(str(ROOT))
+# fmt: on
+
+
 import json
 from argparse import ArgumentParser, Namespace
 from typing import Dict
@@ -9,13 +17,18 @@ from pytorch_lightning import Trainer
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from torch.utils.data import DataLoader
 
-from callbacks import get_callbacks
-from constants import ROOT
-from dataloader import ChestXrayDataset
-from mlp import SimpleLinear
+from models.resnet import Resnet
+from utils.callbacks import get_callbacks
+from utils.constants import ROOT
+from utils.dataloader import ChestXrayDataset
+
+# For AdamW
+# learning rate proportional to square root of batch_size (theoretically)
+# 3e-4 for smaller batch-size
+# 1e-3 or 1e-4 for bigger batch-size
 
 
-def run_MLP() -> None:
+def run_resnet() -> None:
     with open(ROOT / "config.json", "r") as json_file:
         config_dict = json.loads(json_file.read())
     with open(ROOT / "trainer_config.json", "r") as json_file:
@@ -55,11 +68,12 @@ def run_MLP() -> None:
         args=trainer_args,
         callbacks=get_callbacks(config=config_dict),
         max_steps=5 if config_dict["no_val"] else -1,
+        log_every_n_steps=5,
     )
-    model = SimpleLinear(
-        in_features=config_dict["patch_size"] * config_dict["patch_size"],
+    model = Resnet(
         out_features=config_dict["out_features"],
         config=config_dict,
+        resnet_version=config_dict["resnet_version"],
     )
     trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
     model.save_configs(log_dir=trainer.log_dir)
@@ -100,4 +114,4 @@ def run_MLP() -> None:
 
 
 if __name__ == "__main__":
-    run_MLP()
+    run_resnet()

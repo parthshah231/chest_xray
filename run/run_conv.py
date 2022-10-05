@@ -1,3 +1,10 @@
+# fmt: off
+import sys  # isort:skip
+from pathlib import Path  # isort:skip
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.append(str(ROOT))
+# fmt: on
+
 import json
 from argparse import ArgumentParser, Namespace
 from typing import Dict
@@ -9,10 +16,10 @@ from pytorch_lightning import Trainer
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from torch.utils.data import DataLoader
 
-from callbacks import get_callbacks
-from constants import ROOT
-from conv import SimpleConv
-from dataloader import ChestXrayDataset
+from models.conv import SimpleConv
+from utils.callbacks import get_callbacks
+from utils.constants import ROOT
+from utils.dataloader import ChestXrayDataset
 
 # For AdamW
 # learning rate proportional to square root of batch_size (theoretically)
@@ -60,6 +67,7 @@ def run_conv() -> None:
         args=trainer_args,
         callbacks=get_callbacks(config=config_dict),
         max_steps=5 if config_dict["no_val"] else -1,
+        log_every_n_steps=5,
     )
     model = SimpleConv(config=config_dict)
     trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
