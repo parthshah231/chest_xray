@@ -26,6 +26,13 @@ To classify a normal chest xray to the one with bacterial pneumonia.
 
 After conducting an ablation study, the results are recorded below, please note the batch_size for all the models below is 32.
 
+
+subjectWise_intensityRescale            |  patchWise_intensityRescale
+:-------------------------:|:-------------------------:
+![subjectWise_intensityRescale](https://github.com/parthshah231/chest_xray/blob/master/README/subjectWise_intensityRescale.png)
+  |  ![patchWise_intensityRescale](https://github.com/parthshah231/chest_xray/blob/master/README/patchWise_intensityRescale.png)
+
+
 ### Model : Resnet - 18
 
 |  Re-scaling  | Recall | Precision | F1 Score | Accuracy |
