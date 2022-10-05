@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 from torchio.transforms import RescaleIntensity
 from torchvision.transforms import RandomResizedCrop
 
-from constants import TEST_DIR, TRAIN_DIR, VAL_DIR
+from utils.constants import TEST_DIR, TRAIN_DIR, VAL_DIR
 
 
 class Phase(Enum):
@@ -48,7 +48,9 @@ class ChestXrayDataset(Dataset):
         # x10 faster (generally)
         # self.images = [io.imread(str(img_path)) for img_path in self.img_paths]
         self.label_map = {"NORMAL": 0, "PNEUMONIA": 1}
-        self.labels = [self.label_map[img_path.parent.stem] for img_path in self.img_paths]
+        self.labels = [
+            self.label_map[img_path.parent.stem] for img_path in self.img_paths
+        ]
         self.crop = crop
         self.patch_size = patch_size
         self.rescale = RescaleIntensity()
@@ -87,7 +89,9 @@ class ChestXrayDataset(Dataset):
             resize_crop_img = resize_crop_img.squeeze(0).numpy()
             # the reason to make the box black is purely because the probability
             # of a black spot on the x-ray is much larger than any other color
-            box = np.array([0] * self.box_size * self.box_size).reshape(self.box_size, self.box_size)
+            box = np.array([0] * self.box_size * self.box_size).reshape(
+                self.box_size, self.box_size
+            )
             x, y = np.random.randint(0, self.patch_size - self.box_size, size=2)
             resize_crop_img[x : x + self.box_size, y : y + self.box_size] = box
             resize_crop_img = torch.Tensor(resize_crop_img).unsqueeze(0)
@@ -117,7 +121,9 @@ class ChestXrayTestDataset(Dataset):
         self.rescale = RescaleIntensity()
         self.resize_crop = RandomResizedCrop(size=(self.patch_size, self.patch_size))
         self.label_map = {"NORMAL": 0, "PNEUMONIA": 1}
-        self.labels = [self.label_map[img_path.parent.stem] for img_path in self.img_paths]
+        self.labels = [
+            self.label_map[img_path.parent.stem] for img_path in self.img_paths
+        ]
         self.n_per_image = n_per_image
         self.transform = transfom
 
