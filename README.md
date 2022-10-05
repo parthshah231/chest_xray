@@ -29,8 +29,21 @@ After conducting an ablation study, the results are recorded below, please note 
 
 ![subjectWise_intensityRescale](https://github.com/parthshah231/chest_xray/blob/master/README/subjectWise_intensityRescale.png)
 
+From the above plot, we can infer: 
+- Resnets perform well overall.
+- Simple-conv has a higher precision compared to all meaning there were very few false
+positives i.e. the deeper models ensure that they don't classify healthy people as pneunomia patients.
+- Linear has a very high recall, which tells us that it correctly classifies all the
+patients who have pneumonia, irrespective of the fact that it may have classfied
+a few people who didn't have pnemonia as pnemonia patients.
+
 ![patchWise_intensityRescale](https://github.com/parthshah231/chest_xray/blob/master/README/patchWise_intensityRescale.png)
 
+
+From the above plot, we can infer: 
+- Resnets perform well overall.
+- Simple-conv and Linear both struggle with precision, which leads to affecting their
+f1-score.
 
 ### Model : Resnet - 18
 
